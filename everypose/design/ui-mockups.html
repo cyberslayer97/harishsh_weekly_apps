@@ -159,6 +159,21 @@ h1 { font-size: 32px; line-height: 1.2; color: var(--tx-h); margin: var(--s2) 0 
 
 .note { margin-top: var(--s8); padding: var(--s4) var(--s5); background: var(--amb-lt); color: #78350F; border-radius: var(--r-sm); font-size: 14px; line-height: 1.5; max-width: 720px; display: flex; gap: var(--s3); }
 
+
+/* Demo animation */
+.flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 3; }
+.flash.go { animation: flash .5s ease-out; }
+@keyframes flash { 0% { opacity: .95; } 100% { opacity: 0; } }
+.thumb-last.pop { animation: pop .5s cubic-bezier(.2,1.4,.4,1); }
+@keyframes pop { 0% { transform: scale(.6); } 100% { transform: scale(1); } }
+.status-chip.ok { background: var(--grn-lt); color: var(--grn); }
+.status-chip.warn { background: var(--amb-lt); color: var(--amb); }
+#count.bump { animation: pop .4s ease-out; }
+.phases { display: flex; flex-wrap: wrap; gap: var(--s2); justify-content: center; margin-top: var(--s4); }
+.phases span { font-size: 12px; font-weight: 600; padding: 4px var(--s3); border-radius: 999px; background: var(--bg-soft); color: var(--tx-m); transition: background .2s, color .2s; }
+.phases span.on { background: var(--acc); color: #fff; }
+@media (prefers-reduced-motion: reduce) { .flash.go, .thumb-last.pop, #count.bump { animation: none; } }
+
 /* Responsive */
 @media (max-width: 1280px) { .grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 768px) { .page { padding: var(--s6) var(--s4); } .grid { grid-template-columns: 1fr; gap: var(--s8); } h1 { font-size: 24px; } }
@@ -178,6 +193,7 @@ h1 { font-size: 32px; line-height: 1.2; color: var(--tx-h); margin: var(--s2) 0 
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
     <symbol id="i-save" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></symbol>
     <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></symbol>
     <symbol id="i-crown" viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></symbol>
     <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
@@ -203,29 +219,24 @@ h1 { font-size: 32px; line-height: 1.2; color: var(--tx-h); margin: var(--s2) 0 
         <div class="screen">
           <div class="preview">
             <div class="cam-top">
-              <span class="pill"><span class="dot-live"></span>Auto-capture on</span>
-              <span class="pill">12 / 20 today</span>
+              <span class="pill"><span class="dot-live" id="live"></span><span id="livetxt">Auto-capture on</span></span>
+              <span class="pill" id="count">12 / 20 today</span>
             </div>
             <div class="subject">
-              <svg class="skel" viewBox="0 0 200 300" role="img" aria-label="Detected pose skeleton">
-                <g class="bone">
-                  <path d="M100 54V80M75 80H125M75 80L55 120L45 160M125 80L150 60L165 25M75 80L85 170H115L125 80M85 170L80 225L78 280M115 170L122 215L135 262"/>
-                </g>
-                <circle class="bone" cx="100" cy="40" r="14"/>
-                <g class="joint">
-                  <circle cx="75" cy="80" r="6"/><circle cx="125" cy="80" r="6"/><circle cx="55" cy="120" r="6"/><circle cx="150" cy="60" r="6"/>
-                  <circle cx="45" cy="160" r="6"/><circle cx="165" cy="25" r="6"/><circle cx="85" cy="170" r="6"/><circle cx="115" cy="170" r="6"/>
-                  <circle cx="80" cy="225" r="6"/><circle cx="122" cy="215" r="6"/><circle cx="78" cy="280" r="6"/><circle cx="135" cy="262" r="6"/>
-                </g>
+              <svg class="skel" id="skel" viewBox="0 0 200 300" role="img" aria-label="Detected pose skeleton">
+                <path class="bone" id="bones" d=""/>
+                <circle class="bone" id="head" cx="100" cy="40" r="14"/>
+                <g class="joint" id="joints"></g>
               </svg>
             </div>
             <!-- Signature element: hold ring that fills while the pose is stable -->
             <svg viewBox="0 0 120 120" style="position:absolute;left:50%;top:44px;width:72px;height:72px;transform:translateX(-50%);z-index:2" aria-label="Hold progress 70 percent" role="img">
               <circle cx="60" cy="60" r="50" fill="rgba(255,255,255,.85)" stroke="rgba(109,40,217,.15)" stroke-width="10"/>
-              <circle cx="60" cy="60" r="50" fill="none" stroke="#6D28D9" stroke-width="10" stroke-linecap="round" stroke-dasharray="220 314" transform="rotate(-90 60 60)"/>
-              <text x="60" y="68" text-anchor="middle" font-size="26" font-weight="700" fill="#1A1A1A" font-family="Inter">0.3s</text>
+              <circle cx="60" cy="60" r="50" fill="none" id="ringfill" stroke="#6D28D9" stroke-width="10" stroke-linecap="round" stroke-dasharray="220 314" transform="rotate(-90 60 60)"/>
+              <text id="ringtxt" x="60" y="68" text-anchor="middle" font-size="26" font-weight="700" fill="#1A1A1A" font-family="Inter">0.3s</text>
             </svg>
-            <span class="pill status-chip">Hold still · new pose detected</span>
+            <span class="pill status-chip" id="chip">Hold still · new pose detected</span>
+            <div class="flash" id="flash" aria-hidden="true"></div>
           </div>
           <div class="cam-controls">
             <div class="seg" role="radiogroup" aria-label="Sensitivity">
@@ -234,8 +245,8 @@ h1 { font-size: 32px; line-height: 1.2; color: var(--tx-h); margin: var(--s2) 0 
               <button class="locked" role="radio" aria-checked="false">High <svg class="i"><use href="#i-lock"/></svg></button>
             </div>
             <div class="cam-row">
-              <div class="col"><div class="thumb-last"><svg><use href="#skel-mini"/></svg></div><span class="lbl">Last</span></div>
-              <div class="col"><button class="shutter" aria-label="Pause auto-capture"><span><svg class="i"><use href="#i-pause"/></svg></span></button><span class="lbl">Pause</span></div>
+              <div class="col"><div class="thumb-last" id="thumb"><svg viewBox="0 0 200 300"><use href="#skel-mini"/></svg></div><span class="lbl">Last</span></div>
+              <div class="col"><button class="shutter" id="toggle" aria-label="Pause auto-capture"><span><svg class="i"><use id="toggleicon" href="#i-pause"/></svg></span></button><span class="lbl" id="togglelbl">Pause</span></div>
               <div class="col"><button class="icon-btn" aria-label="Flip camera" style="background:var(--bg-soft)"><svg class="i"><use href="#i-flip"/></svg></button><span class="lbl">Flip</span></div>
             </div>
           </div>
@@ -246,7 +257,8 @@ h1 { font-size: 32px; line-height: 1.2; color: var(--tx-h); margin: var(--s2) 0 
           </nav>
         </div>
       </div>
-      <p class="why"><b>Why it works:</b> the live preview dominates and the hold ring is the one violet focal point, so users see a shot is coming without looking for a button. High sensitivity shows a lock, not a hidden option. Every icon has a text label.</p>
+      <div class="phases" aria-label="Demo steps"><span data-p="move">1 · Pose changes</span><span data-p="hold">2 · Hold still</span><span data-p="shot">3 · Photo saved</span></div>
+      <p class="why"><b>Live demo:</b> it plays on its own (slowed down). Press Pause on the phone to stop it.<br><b>Why it works:</b> the live preview dominates and the hold ring is the one violet focal point, so users see a shot is coming without looking for a button. High sensitivity shows a lock, not a hidden option. Every icon has a text label.</p>
     </article>
 
     <!-- 2. SESSION -->
@@ -374,5 +386,116 @@ h1 { font-size: 32px; line-height: 1.2; color: var(--tx-h); margin: var(--s2) 0 
 
   <div class="note" role="note"><svg class="i" style="color:#B45309"><use href="#i-lock"/></svg><div><b>Placeholders:</b> prices, the 20-per-day limit and the 7-day trial are sample values. The real values live in one config file and are set in RevenueCat and the store consoles.</div></div>
 </main>
+<script>
+(function () {
+  // Joint order: 0 L-shoulder, 1 R-shoulder, 2 L-elbow, 3 R-elbow, 4 L-wrist, 5 R-wrist,
+  // 6 L-hip, 7 R-hip, 8 L-knee, 9 R-knee, 10 L-ankle, 11 R-ankle
+  var POSES = [
+    { h: [100,40], j: [[75,80],[125,80],[55,120],[150,60],[45,160],[165,25],[85,170],[115,170],[80,225],[122,215],[78,280],[135,262]] },
+    { h: [100,40], j: [[75,80],[125,80],[55,50],[145,50],[50,15],[150,15],[85,170],[115,170],[82,225],[118,225],[80,280],[120,280]] },
+    { h: [100,40], j: [[75,80],[125,80],[40,82],[160,82],[8,82],[192,82],[85,170],[115,170],[70,225],[130,225],[60,280],[140,280]] },
+    { h: [96,42],  j: [[75,82],[125,82],[55,60],[150,120],[45,25],[158,160],[85,170],[115,170],[88,225],[125,212],[85,280],[150,255]] }
+  ];
+  var GRADS = ['linear-gradient(135deg,#7C3AED,#C084FC)','linear-gradient(135deg,#2563EB,#93C5FD)','linear-gradient(135deg,#DB2777,#F9A8D4)','linear-gradient(135deg,#0F766E,#5EEAD4)'];
+  var MOVE = 1000, HOLD = 1200, SHOT = 1000, LIMIT = 20, START = 12;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var bones = $('bones'), head = $('head'), joints = $('joints');
+  if (!bones) return;
+  for (var i = 0; i < 12; i++) { var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); c.setAttribute('r', 6); joints.appendChild(c); }
+  var jc = joints.children;
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function ease(t) { return t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2; }
+  function mix(A, B, t) {
+    return { h: [lerp(A.h[0],B.h[0],t), lerp(A.h[1],B.h[1],t)], j: A.j.map(function (a, k) { return [lerp(a[0],B.j[k][0],t), lerp(a[1],B.j[k][1],t)]; }) };
+  }
+  function pathOf(P) {
+    var j = P.j, m = [(j[0][0]+j[1][0])/2, (j[0][1]+j[1][1])/2];
+    function pt(a) { return a[0].toFixed(1) + ' ' + a[1].toFixed(1); }
+    return 'M' + P.h[0].toFixed(1) + ' ' + (P.h[1]+14).toFixed(1) + 'L' + pt(m) +
+      'M' + pt(j[0]) + 'L' + pt(j[1]) + 'M' + pt(j[0]) + 'L' + pt(j[2]) + 'L' + pt(j[4]) + 'M' + pt(j[1]) + 'L' + pt(j[3]) + 'L' + pt(j[5]) +
+      'M' + pt(j[0]) + 'L' + pt(j[6]) + 'L' + pt(j[7]) + 'L' + pt(j[1]) + 'M' + pt(j[6]) + 'L' + pt(j[8]) + 'L' + pt(j[10]) + 'M' + pt(j[7]) + 'L' + pt(j[9]) + 'L' + pt(j[11]);
+  }
+  function draw(P) {
+    bones.setAttribute('d', pathOf(P));
+    head.setAttribute('cx', P.h[0]); head.setAttribute('cy', P.h[1]);
+    for (var k = 0; k < 12; k++) { jc[k].setAttribute('cx', P.j[k][0]); jc[k].setAttribute('cy', P.j[k][1]); }
+  }
+  function mini(P) {
+    return '<svg viewBox="0 0 200 300"><g fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round"><circle cx="' + P.h[0] + '" cy="' + P.h[1] + '" r="20"/><path d="' + pathOf(P) + '"/></g></svg>';
+  }
+
+  var ringfill = $('ringfill'), ringtxt = $('ringtxt'), chip = $('chip'), flash = $('flash'),
+      thumb = $('thumb'), count = $('count'), toggle = $('toggle'), toggleicon = $('toggleicon'),
+      togglelbl = $('togglelbl'), live = $('live'), livetxt = $('livetxt');
+  var phaseEls = document.querySelectorAll('.phases span');
+
+  var state = { idx: 0, phase: 'hold', t: 0, n: START, running: true, captured: false, shots: 0 };
+  function setPhase(ph) {
+    state.phase = ph; state.t = 0; state.captured = false;
+    for (var i = 0; i < phaseEls.length; i++) phaseEls[i].classList.toggle('on', phaseEls[i].getAttribute('data-p') === ph);
+  }
+  function setChip(text, cls) { chip.textContent = text; chip.className = 'pill status-chip' + (cls ? ' ' + cls : ''); }
+  function ring(p) {
+    ringfill.setAttribute('stroke-dasharray', (p * 314).toFixed(1) + ' 314');
+    ringtxt.textContent = (0.4 * (1 - p)).toFixed(1) + 's';
+  }
+  function restart(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+  function capture() {
+    state.captured = true;
+    if (state.n >= LIMIT) { setChip('Daily limit reached · Go Pro for unlimited', 'warn'); return; }
+    state.n++; state.shots++;
+    count.textContent = state.n + ' / ' + LIMIT + ' today';
+    restart(count, 'bump');
+    restart(flash, 'go');
+    thumb.style.background = GRADS[state.shots % GRADS.length];
+    thumb.innerHTML = mini(POSES[state.idx]);
+    restart(thumb, 'pop');
+    setChip('✓ Photo saved', 'ok');
+  }
+
+  var last = 0;
+  function frame(now) {
+    var dt = Math.min(now - last, 100); last = now;
+    if (state.running) {
+      state.t += dt;
+      var next = (state.idx + 1) % POSES.length;
+      if (state.phase === 'move') {
+        var p = Math.min(state.t / MOVE, 1);
+        draw(mix(POSES[state.idx], POSES[next], ease(p)));
+        ring(0); setChip('Moving…');
+        if (p >= 1) { state.idx = next; setPhase('hold'); }
+      } else if (state.phase === 'hold') {
+        var q = Math.min(state.t / HOLD, 1);
+        draw(POSES[state.idx]); ring(q); setChip('Hold still · new pose detected');
+        if (q >= 1) { setPhase('shot'); capture(); }
+      } else {
+        ring(1); draw(POSES[state.idx]);
+        if (state.t >= SHOT) {
+          if (state.n >= LIMIT && state.captured) { state.n = START; count.textContent = START + ' / ' + LIMIT + ' today'; }
+          setPhase('move');
+        }
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  toggle.addEventListener('click', function () {
+    state.running = !state.running;
+    toggle.setAttribute('aria-label', state.running ? 'Pause auto-capture' : 'Resume auto-capture');
+    toggleicon.setAttribute('href', state.running ? '#i-pause' : '#i-play');
+    togglelbl.textContent = state.running ? 'Pause' : 'Resume';
+    livetxt.textContent = state.running ? 'Auto-capture on' : 'Paused';
+    live.style.background = state.running ? '' : '#B45309';
+    live.style.boxShadow = state.running ? '' : '0 0 0 3px #FEF3C7';
+    if (!state.running) setChip('Paused · tap Resume');
+  });
+
+  draw(POSES[0]); ring(0); setPhase('hold');
+  requestAnimationFrame(function (t) { last = t; requestAnimationFrame(frame); });
+})();
+</script>
 </body>
 </html>
