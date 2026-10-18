@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>everypose detector test</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F7F8FA; --card: #FFFFFF; --soft: #F1EFFA;
+  --tx-h: #1A1A1A; --tx-b: #4E4E4E; --tx-m: #626262;
+  --acc: #6D28D9; --acc-lt: #EDE9FE; --grn: #15803D; --grn-lt: #DCFCE7; --amb: #B45309; --amb-lt: #FEF3C7; --red: #B91C1C;
+  --bdr: rgba(40, 30, 90, .10);
+  --sh-sm: 0 1px 3px rgba(60, 40, 120, .08); --sh-md: 0 4px 16px rgba(60, 40, 120, .08);
+  --r: 16px; --r-sm: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--tx-b); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 48px; }
+h1 { font-size: 28px; line-height: 1.2; color: var(--tx-h); }
+h2 { font-size: 18px; color: var(--tx-h); margin: 32px 0 12px; }
+.lead { margin: 8px 0 24px; max-width: 640px; color: var(--tx-m); }
+.stage { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 24px; align-items: start; }
+.view { position: relative; background: #1d1830; border-radius: var(--r); overflow: hidden; aspect-ratio: 4 / 3; box-shadow: var(--sh-md); }
+.view video, .view canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.view video { display: none; }
+.view.live video { display: block; }
+.flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.flash.go { animation: flash .5s ease-out; }
+@keyframes flash { 0% { opacity: .9; } 100% { opacity: 0; } }
+.ring { position: absolute; top: 16px; left: 50%; width: 72px; height: 72px; transform: translateX(-50%); }
+.pill { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); background: rgba(255,255,255,.94); color: var(--tx-h); font-size: 14px; font-weight: 600; padding: 6px 14px; border-radius: 999px; white-space: nowrap; box-shadow: var(--sh-sm); }
+.pill.ok { background: var(--grn-lt); color: var(--grn); }
+.pill.warn { background: var(--amb-lt); color: var(--amb); }
+.cover { position: absolute; inset: 0; display: grid; place-content: center; gap: 12px; text-align: center; padding: 24px; background: rgba(29,24,48,.86); color: #fff; }
+.cover p { max-width: 360px; font-size: 14px; color: #E5E0F5; }
+.cover[hidden] { display: none; }
+.btn { min-height: 48px; padding: 0 20px; border-radius: var(--r-sm); font-weight: 600; background: var(--acc); color: #fff; box-shadow: var(--sh-md); }
+.btn.secondary { background: var(--acc-lt); color: var(--acc); box-shadow: none; }
+.btn.link { background: none; color: #fff; text-decoration: underline; box-shadow: none; min-height: 44px; font-size: 14px; }
+.panel { background: var(--card); border: 1px solid var(--bdr); border-radius: var(--r); padding: 20px; box-shadow: var(--sh-sm); display: grid; gap: 20px; }
+.panel h3 { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--tx-m); margin-bottom: 8px; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--soft); border-radius: var(--r-sm); padding: 3px; }
+.seg button { min-height: 44px; border-radius: 8px; font-weight: 600; font-size: 14px; color: var(--tx-m); }
+.seg button.on { background: #fff; color: var(--acc); box-shadow: var(--sh-sm); }
+label { display: flex; justify-content: space-between; font-size: 14px; color: var(--tx-h); font-weight: 500; }
+label output { color: var(--acc); font-weight: 600; font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--acc); height: 32px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat { background: var(--bg); border-radius: var(--r-sm); padding: 10px 12px; }
+.stat b { display: block; font-size: 22px; line-height: 1.2; color: var(--tx-h); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--tx-m); }
+.meter { position: relative; height: 10px; background: var(--acc-lt); border-radius: 999px; margin-top: 8px; }
+.meter i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--acc); border-radius: 999px; width: 0; }
+.meter u { position: absolute; top: -4px; bottom: -4px; width: 3px; background: var(--tx-h); border-radius: 2px; }
+.meter-note { font-size: 12px; color: var(--tx-m); margin-top: 6px; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.gallery figure { background: var(--card); border: 1px solid var(--bdr); border-radius: var(--r-sm); overflow: hidden; box-shadow: var(--sh-sm); }
+.gallery img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.gallery figcaption { font-size: 12px; padding: 6px 10px; color: var(--tx-m); }
+.empty { color: var(--tx-m); font-size: 14px; }
+.err { color: var(--red); font-size: 14px; font-weight: 500; }
+@media (max-width: 860px) { .stage { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>everypose: detector test</h1>
+  <p class="lead">Runs the real <code>PoseChangeDetector</code> from the app on your webcam. Stand back so your head, shoulders, hips and legs are in view. Strike a pose, hold still, then change to a new pose.</p>
+
+  <section class="stage">
+    <div class="view" id="view">
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay" width="640" height="480"></canvas>
+      <div class="flash" id="flash" aria-hidden="true"></div>
+      <svg class="ring" viewBox="0 0 120 120" role="img" aria-label="Hold progress">
+        <circle cx="60" cy="60" r="50" fill="rgba(255,255,255,.88)" stroke="rgba(109,40,217,.15)" stroke-width="10"/>
+        <circle id="ringfill" cx="60" cy="60" r="50" fill="none" stroke="#6D28D9" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 314" transform="rotate(-90 60 60)"/>
+        <text id="ringtxt" x="60" y="68" text-anchor="middle" font-size="26" font-weight="700" fill="#1A1A1A" font-family="Inter, sans-serif">0.4s</text>
+      </svg>
+      <div class="pill" id="status">Waiting to start</div>
+      <div class="cover" id="cover">
+        <button class="btn" id="start">Start camera</button>
+        <p id="coverMsg">Everything runs in this browser tab. No video leaves your device.</p>
+        <button class="btn link" id="demo">Try without a camera (demo poses)</button>
+      </div>
+    </div>
+
+    <aside class="panel" aria-label="Detector settings and readouts">
+      <div>
+        <h3>Sensitivity</h3>
+        <div class="seg" role="radiogroup" aria-label="Sensitivity">
+          <button role="radio" data-level="low" aria-checked="false">Low</button>
+          <button role="radio" data-level="medium" aria-checked="true" class="on">Medium</button>
+          <button role="radio" data-level="high" aria-checked="false">High</button>
+        </div>
+      </div>
+      <div>
+        <label for="hold">Hold time <output id="holdOut">400 ms</output></label>
+        <input type="range" id="hold" min="200" max="1500" step="50" value="400">
+      </div>
+      <div>
+        <label for="cool">Cooldown <output id="coolOut">1500 ms</output></label>
+        <input type="range" id="cool" min="0" max="4000" step="100" value="1500">
+      </div>
+      <div>
+        <h3>Change from last photo</h3>
+        <div class="meter" aria-hidden="true"><i id="scoreBar"></i><u id="thrMark"></u></div>
+        <p class="meter-note" id="scoreNote">No photo yet.</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="photos">0</b><span>Photos taken</span></div>
+        <div class="stat"><b id="fps">–</b><span>Frames per second</span></div>
+      </div>
+      <button class="btn secondary" id="reset">Forget last photo</button>
+    </aside>
+  </section>
+
+  <h2>Photos</h2>
+  <div class="gallery" id="gallery"><p class="empty" id="empty">Photos appear here when you change pose.</p></div>
+</main>
+
+<script type="module">
+import { PoseChangeDetector, configForSensitivity, CHANGE_THRESHOLDS } from './pose.bundle.js'
+
+const $ = (id) => document.getElementById(id)
+const view = $('view'), video = $('video'), canvas = $('overlay'), ctx = canvas.getContext('2d')
+
+const BONES = [[5,6],[5,7],[7,9],[6,8],[8,10],[5,11],[6,12],[11,12],[11,13],[13,15],[12,14],[14,16]]
+
+const cfg = configForSensitivity('medium')   // mirror of what the detector was last given, for the readouts
+const detector = new PoseChangeDetector(cfg)
+let photos = 0
+let source = null          // { read(): Promise<{ pose, points, width, height }>, snapshot(): string }
+let lastFrameAt = 0, fpsSmooth = 0
+
+// ---------- Sources ----------
+// Pose coordinates for the detector are in units of frame height (so x and y have the same scale).
+function liveSource(detectorModel) {
+  return {
+    async read() {
+      const w = video.videoWidth, h = video.videoHeight
+      const out = await detectorModel.estimatePoses(video, { flipHorizontal: false })
+      const kps = out[0] ? out[0].keypoints : null
+      if (!kps) return { pose: null, points: null, width: w, height: h }
+      return {
+        pose: kps.map((k) => ({ x: k.x / h, y: k.y / h, score: k.score ?? 0 })),
+        points: kps.map((k) => ({ x: k.x, y: k.y, score: k.score ?? 0 })),
+        width: w, height: h,
+      }
+    },
+    snapshot() {
+      const c = document.createElement('canvas')
+      c.width = video.videoWidth; c.height = video.videoHeight
+      const g = c.getContext('2d')
+      g.translate(c.width, 0); g.scale(-1, 1); g.drawImage(video, 0, 0)
+      return c.toDataURL('image/jpeg', 0.8)
+    },
+  }
+}
+
+// Synthetic poses (same shapes as the design mockup), for trying the harness with no camera.
+const BOX = 300
+const DEMO = [
+  { h: [100,40], j: [[75,80],[125,80],[55,120],[150,60],[45,160],[165,25],[85,170],[115,170],[80,225],[122,215],[78,280],[135,262]] },
+  { h: [100,40], j: [[75,80],[125,80],[55,50],[145,50],[50,15],[150,15],[85,170],[115,170],[82,225],[118,225],[80,280],[120,280]] },
+  { h: [100,40], j: [[75,80],[125,80],[40,82],[160,82],[8,82],[192,82],[85,170],[115,170],[70,225],[130,225],[60,280],[140,280]] },
+]
+const ORDER = [5,6,7,8,9,10,11,12,13,14,15,16]
+function demoPose(def, noise) {
+  const arr = new Array(17)
+  const pt = ([x, y]) => ({ x: 0.28 + x / BOX + noise(), y: 0.1 + y / BOX * 0.8 + noise(), score: 0.9 })
+  for (const i of [0,1,2,3,4]) arr[i] = pt(def.h)
+  ORDER.forEach((idx, n) => (arr[idx] = pt(def.j[n])))
+  return arr
+}
+function mockSource() {
+  const t0 = performance.now()
+  const HOLD = 1800, MOVE = 700
+  const noise = () => (Math.random() - 0.5) * 0.006
+  const lerp = (a, b, t) => a + (b - a) * t
+  return {
+    async read() {
+      const t = performance.now() - t0, cycle = HOLD + MOVE
+      const n = Math.floor(t / cycle) % DEMO.length, within = t % cycle
+      const from = DEMO[n], to = DEMO[(n + 1) % DEMO.length]
+      const k = within < HOLD ? 0 : (within - HOLD) / MOVE
+      const mix = { h: [lerp(from.h[0], to.h[0], k), lerp(from.h[1], to.h[1], k)], j: from.j.map((a, i) => [lerp(a[0], to.j[i][0], k), lerp(a[1], to.j[i][1], k)]) }
+      const pose = demoPose(mix, noise)
+      const w = 640, h = 480
+      return { pose, points: pose.map((p) => ({ x: p.x * h, y: p.y * h, score: p.score })), width: w, height: h }
+    },
+    snapshot() { return canvas.toDataURL('image/jpeg', 0.8) },
+  }
+}
+
+// ---------- Drawing ----------
+function drawFrame(points, w, h, mock) {
+  if (canvas.width !== w) { canvas.width = w; canvas.height = h }
+  ctx.clearRect(0, 0, w, h)
+  if (mock) { ctx.fillStyle = '#EDE9FE'; ctx.fillRect(0, 0, w, h) }
+  if (!points) return
+  ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.strokeStyle = '#6D28D9'
+  for (const [a, b] of BONES) {
+    if (points[a].score < 0.3 || points[b].score < 0.3) continue
+    ctx.beginPath(); ctx.moveTo(points[a].x, points[a].y); ctx.lineTo(points[b].x, points[b].y); ctx.stroke()
+  }
+  for (let i = 0; i < points.length; i++) {
+    if (i >= 1 && i <= 4) continue
+    if (points[i].score < 0.3) continue
+    ctx.beginPath(); ctx.arc(points[i].x, points[i].y, 6, 0, Math.PI * 2)
+    ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke()
+  }
+}
+
+const STATUS = {
+  'no-pose': ['Step back so your torso is in view', 'warn'],
+  'unsure': ['Not enough joints visible to compare', 'warn'],
+  'same-pose': ['Same pose as the last photo', ''],
+  'moving': ['New pose · keep moving or hold still', ''],
+  'holding': ['Hold still…', ''],
+  'cooldown': ['Cooldown · wait for the next shot', 'warn'],
+  'captured': ['✓ Photo taken', 'ok'],
+}
+let flashUntil = 0
+
+function render(r) {
+  const [text, cls] = STATUS[r.status]
+  const status = $('status')
+  const shown = performance.now() < flashUntil ? STATUS.captured : [text, cls]
+  status.textContent = shown[0]; status.className = 'pill' + (shown[1] ? ' ' + shown[1] : '')
+  $('ringfill').setAttribute('stroke-dasharray', (r.holdProgress * 314).toFixed(1) + ' 314')
+  $('ringtxt').textContent = ((cfg.holdMs / 1000) * (1 - r.holdProgress)).toFixed(1) + 's'
+  const thr = cfg.changeThreshold
+  const max = Math.max(thr * 2, r.changeScore ?? 0, 0.6)
+  $('thrMark').style.left = (thr / max * 100) + '%'
+  $('scoreBar').style.width = r.changeScore == null ? '0%' : Math.min(100, r.changeScore / max * 100) + '%'
+  $('scoreNote').textContent = r.changeScore == null
+    ? 'No photo yet, or too few joints to compare.'
+    : `Change ${r.changeScore.toFixed(2)} · a new pose needs ${thr.toFixed(2)} (black mark)`
+}
+
+function takePhoto(score) {
+  photos++
+  $('photos').textContent = photos
+  const empty = $('empty'); if (empty) empty.remove()
+  const fig = document.createElement('figure')
+  const img = document.createElement('img'); img.src = source.snapshot(); img.alt = `Photo ${photos}`
+  const cap = document.createElement('figcaption')
+  cap.textContent = `#${photos} · ${new Date().toLocaleTimeString()}` + (score == null ? ' · first photo' : ` · change ${score.toFixed(2)}`)
+  fig.append(img, cap)
+  $('gallery').prepend(fig)
+  const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go')
+  flashUntil = performance.now() + 700
+}
+
+// ---------- Loop ----------
+let running = false
+async function loop() {
+  if (!running) return
+  const now = performance.now()
+  try {
+    const { pose, points, width, height } = await source.read()
+    const t = performance.now()
+    const r = detector.update(pose, t)
+    drawFrame(points, width, height, source.mock)
+    render(r)
+    if (r.capture) takePhoto(r.changeScore)
+    if (lastFrameAt) fpsSmooth = fpsSmooth ? fpsSmooth * 0.9 + (1000 / (now - lastFrameAt)) * 0.1 : 1000 / (now - lastFrameAt)
+    lastFrameAt = now
+    $('fps').textContent = Math.round(fpsSmooth)
+  } catch (e) { console.error(e); showCover('Something went wrong: ' + e.message) ; running = false; return }
+  requestAnimationFrame(loop)
+}
+
+function showCover(msg) { $('cover').hidden = false; $('coverMsg').textContent = msg; $('coverMsg').className = 'err' }
+
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s) })
+}
+
+async function startLive() {
+  $('start').disabled = true; $('coverMsg').className = ''; $('coverMsg').textContent = 'Loading the pose model (about 5 MB)…'
+  try {
+    const cdn = 'https://cdn.jsdelivr.net/npm/'
+    await loadScript(cdn + '@tensorflow/tfjs-core@4.22.0/dist/tf-core.min.js')
+    await loadScript(cdn + '@tensorflow/tfjs-converter@4.22.0/dist/tf-converter.min.js')
+    await loadScript(cdn + '@tensorflow/tfjs-backend-webgl@4.22.0/dist/tf-backend-webgl.min.js')
+    await loadScript(cdn + '@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js')
+    await tf.setBackend('webgl'); await tf.ready()
+    const model = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING })
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false })
+    video.srcObject = stream; await video.play()
+    view.classList.add('live'); view.style.aspectRatio = video.videoWidth + ' / ' + video.videoHeight
+    source = liveSource(model)
+    begin()
+  } catch (e) {
+    console.error(e)
+    $('start').disabled = false
+    showCover(e.name === 'NotAllowedError' ? 'Camera permission was blocked. Allow the camera for this page and try again.' : 'Could not start: ' + e.message)
+  }
+}
+function startDemo() { source = mockSource(); source.mock = true; begin() }
+function begin() { $('cover').hidden = true; running = true; detector.reset(); requestAnimationFrame(loop) }
+
+// ---------- Controls ----------
+$('start').addEventListener('click', startLive)
+$('demo').addEventListener('click', startDemo)
+$('reset').addEventListener('click', () => detector.reset())
+for (const b of document.querySelectorAll('.seg button')) {
+  b.addEventListener('click', () => {
+    cfg.changeThreshold = CHANGE_THRESHOLDS[b.dataset.level]
+    for (const o of document.querySelectorAll('.seg button')) { const on = o === b; o.classList.toggle('on', on); o.setAttribute('aria-checked', on) }
+    detector.setConfig({ changeThreshold: cfg.changeThreshold })
+  })
+}
+$('hold').addEventListener('input', (e) => { $('holdOut').textContent = e.target.value + ' ms'; cfg.holdMs = Number(e.target.value); detector.setConfig({ holdMs: cfg.holdMs }) })
+$('cool').addEventListener('input', (e) => { $('coolOut').textContent = e.target.value + ' ms'; cfg.cooldownMs = Number(e.target.value); detector.setConfig({ cooldownMs: cfg.cooldownMs }) })
+
+if (new URLSearchParams(location.search).has('demo')) startDemo()
+window.__everypose = { detector, get photos() { return photos } }
+</script>
+</body>
+</html>
