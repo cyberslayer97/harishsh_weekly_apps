@@ -93,6 +93,8 @@ export class PoseChangeDetector {
   private config: DetectorConfig
   private anchor: NormalizedPose | null = null
   private lastCaptureAt = Number.NEGATIVE_INFINITY
+  /** What `anchor` and `lastCaptureAt` were before the latest capture, so it can be undone. */
+  private beforeCapture: { anchor: NormalizedPose | null; at: number } | null = null
   private lastFrameAt = Number.NEGATIVE_INFINITY
   /** The pose when the current hold started, and when. */
   private holdPose: NormalizedPose | null = null
@@ -110,9 +112,22 @@ export class PoseChangeDetector {
   reset(): void {
     this.anchor = null
     this.lastCaptureAt = Number.NEGATIVE_INFINITY
+    this.beforeCapture = null
     this.lastFrameAt = Number.NEGATIVE_INFINITY
     this.holdPose = null
     this.holdStartedAt = 0
+  }
+
+  /**
+   * Takes back the capture just reported, for when the photo could not be taken: the pose counts
+   * as not yet photographed again, and the cooldown starts from `nowMs` so a failing camera is
+   * retried at the cooldown rate, not on every frame.
+   */
+  undoCapture(nowMs: number): void {
+    if (this.beforeCapture == null) return
+    this.anchor = this.beforeCapture.anchor
+    this.lastCaptureAt = nowMs
+    this.beforeCapture = null
   }
 
   update(pose: Pose | null, nowMs: number): DetectorResult {
@@ -157,6 +172,7 @@ export class PoseChangeDetector {
       }
     }
 
+    this.beforeCapture = { anchor: this.anchor, at: this.lastCaptureAt }
     this.anchor = current
     this.lastCaptureAt = nowMs
     return { capture: true, holdProgress: 1, changeScore, status: 'captured' }

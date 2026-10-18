@@ -2,24 +2,53 @@
   "expo": {
     "name": "everypose",
     "slug": "everypose",
+    "scheme": "everypose",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.everypose.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "everypose uses the camera to see your pose and take a photo when it changes."
+      }
     },
     "android": {
+      "package": "com.everypose.app",
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#EDE9FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
+    "plugins": [
+      "expo-router",
+      "expo-dev-client",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "everypose saves the photos it takes to your gallery.",
+          "savePhotosPermission": "everypose saves the photos it takes to your gallery.",
+          "isAccessMediaLocationEnabled": false,
+          "granularPermissions": [
+            "photo"
+          ]
+        }
+      ],
+      "react-native-fast-tflite"
+    ]
   }
 }

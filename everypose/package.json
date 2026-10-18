@@ -1,12 +1,13 @@
 {
   "name": "everypose",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "expo-router/entry",
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
     "expo": "~58.0.14",
     "expo-build-properties": "~58.0.11",
     "expo-constants": "~58.0.12",
+    "expo-dev-client": "~58.0.14",
     "expo-file-system": "~58.0.9",
     "expo-haptics": "~58.0.7",
     "expo-keep-awake": "~58.0.3",
@@ -39,14 +40,15 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
+    "start": "expo start --dev-client",
+    "android": "node scripts/ensure-model.mjs && expo run:android",
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "harness:build": "esbuild src/pose/index.ts --bundle --format=esm --target=es2020 --outfile=harness/pose.bundle.js",
-    "harness": "npm run harness:build && http-server harness -p 8080 -c-1"
+    "harness": "npm run harness:build && http-server harness -p 8080 -c-1",
+    "model": "node scripts/download-model.mjs",
+    "prestart": "node scripts/ensure-model.mjs",
+    "eas-build-pre-install": "node scripts/download-model.mjs"
   },
   "private": true
 }

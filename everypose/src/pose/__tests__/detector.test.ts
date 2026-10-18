@@ -170,6 +170,41 @@ describe('PoseChangeDetector', () => {
     expect(statuses.slice(firstHolding).every((st) => st === 'holding')).toBe(true)
   })
 
+  describe('undoCapture', () => {
+    it('lets the same pose be photographed again, after the cooldown', () => {
+      const det = new PoseChangeDetector({ cooldownMs: 1000 })
+      const first = captures(feed(det, () => A, 0, 600))[0]
+      det.undoCapture(first.t + 50)
+      const frames = feed(det, () => A, first.t + 83, 3000)
+      const retry = captures(frames)
+      expect(retry).toHaveLength(1)
+      expect(retry[0].t - (first.t + 50)).toBeGreaterThanOrEqual(1000)
+    })
+
+    it('restores the previous photo as the reference', () => {
+      const det = new PoseChangeDetector({ cooldownMs: 0 })
+      feed(det, () => A, 0, 600) // photo of A
+      const second = captures(feed(det, () => B, 700, 800))[0] // photo of B
+      det.undoCapture(second.t)
+      // B is still a new pose compared with the last real photo (A), so it is taken again
+      expect(captures(feed(det, () => B, second.t + 33, 800))).toHaveLength(1)
+    })
+
+    it('does nothing when there is nothing to undo', () => {
+      const det = new PoseChangeDetector()
+      det.undoCapture(0)
+      expect(captures(feed(det, () => A, 0, 600))).toHaveLength(1)
+    })
+
+    it('can only undo the latest capture once', () => {
+      const det = new PoseChangeDetector({ cooldownMs: 0 })
+      const first = captures(feed(det, () => A, 0, 600))[0]
+      det.undoCapture(first.t)
+      det.undoCapture(first.t + 10)
+      expect(captures(feed(det, () => A, first.t + 33, 1000))).toHaveLength(1)
+    })
+  })
+
   it('applies a new config from setConfig()', () => {
     const det = new PoseChangeDetector({ holdMs: 400 })
     det.setConfig({ holdMs: 900 })

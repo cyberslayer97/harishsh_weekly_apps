@@ -121,6 +121,8 @@ var PoseChangeDetector = class {
     __publicField(this, "config");
     __publicField(this, "anchor", null);
     __publicField(this, "lastCaptureAt", Number.NEGATIVE_INFINITY);
+    /** What `anchor` and `lastCaptureAt` were before the latest capture, so it can be undone. */
+    __publicField(this, "beforeCapture", null);
     __publicField(this, "lastFrameAt", Number.NEGATIVE_INFINITY);
     /** The pose when the current hold started, and when. */
     __publicField(this, "holdPose", null);
@@ -134,9 +136,21 @@ var PoseChangeDetector = class {
   reset() {
     this.anchor = null;
     this.lastCaptureAt = Number.NEGATIVE_INFINITY;
+    this.beforeCapture = null;
     this.lastFrameAt = Number.NEGATIVE_INFINITY;
     this.holdPose = null;
     this.holdStartedAt = 0;
+  }
+  /**
+   * Takes back the capture just reported, for when the photo could not be taken: the pose counts
+   * as not yet photographed again, and the cooldown starts from `nowMs` so a failing camera is
+   * retried at the cooldown rate, not on every frame.
+   */
+  undoCapture(nowMs) {
+    if (this.beforeCapture == null) return;
+    this.anchor = this.beforeCapture.anchor;
+    this.lastCaptureAt = nowMs;
+    this.beforeCapture = null;
   }
   update(pose, nowMs) {
     if (nowMs - this.lastFrameAt > this.config.maxFrameGapMs) this.holdPose = null;
@@ -171,6 +185,7 @@ var PoseChangeDetector = class {
         status: holdProgress < HOLDING_MIN_PROGRESS ? "moving" : "holding"
       };
     }
+    this.beforeCapture = { anchor: this.anchor, at: this.lastCaptureAt };
     this.anchor = current;
     this.lastCaptureAt = nowMs;
     return { capture: true, holdProgress: 1, changeScore, status: "captured" };
