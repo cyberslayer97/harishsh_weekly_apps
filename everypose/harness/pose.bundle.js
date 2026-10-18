@@ -178,6 +178,7 @@ var PoseChangeDetector = class {
 };
 
 // src/pose/presets.ts
+var SENSITIVITIES = ["low", "medium", "high"];
 var CHANGE_THRESHOLDS = {
   low: 0.4,
   medium: 0.25,
@@ -199,6 +200,7 @@ export {
   MIN_SHARED_JOINTS,
   MIN_TORSO_LENGTH,
   PoseChangeDetector,
+  SENSITIVITIES,
   configForSensitivity,
   mergeConfig,
   normalizePose,

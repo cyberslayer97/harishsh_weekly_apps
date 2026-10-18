@@ -1,6 +1,8 @@
 import { DEFAULT_CONFIG, mergeConfig, type DetectorConfig } from './detector'
 
-export type Sensitivity = 'low' | 'medium' | 'high'
+/** Ordered from least to most sensitive. */
+export const SENSITIVITIES = ['low', 'medium', 'high'] as const
+export type Sensitivity = (typeof SENSITIVITIES)[number]
 
 /** Distance (in torso lengths) from the last photo that counts as a new pose. */
 export const CHANGE_THRESHOLDS: Record<Sensitivity, number> = {
