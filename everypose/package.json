@@ -33,6 +33,7 @@
     "@types/jest": "^30.0.0",
     "@types/react": "~19.3.0",
     "esbuild": "^0.28.2",
+    "http-server": "^14.1.1",
     "jest": "^30.5.2",
     "ts-jest": "^29.4.15",
     "typescript": "~6.0.3"
@@ -45,7 +46,7 @@
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "harness:build": "esbuild src/pose/index.ts --bundle --format=esm --target=es2020 --outfile=harness/pose.bundle.js",
-    "harness": "npm run harness:build && cd harness && python3 -m http.server 8080"
+    "harness": "npm run harness:build && http-server harness -p 8080 -c-1"
   },
   "private": true
 }

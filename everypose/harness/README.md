@@ -6,7 +6,7 @@ model from TensorFlow.js. It exists to check and tune Feature 1 before the React
 ```bash
 cd everypose
 npm install
-npm run harness            # builds harness/pose.bundle.js and serves http://localhost:8080
+npm run harness            # builds harness/pose.bundle.js and serves http://localhost:8080 (works on Windows, macOS and Linux)
 ```
 
 Open http://localhost:8080 on a computer with a webcam (camera access works on `localhost`; a phone needs HTTPS).
